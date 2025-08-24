@@ -1,0 +1,21 @@
+[metadata]
+Name:Duelist #4 - High on Life
+Goal:Win
+Turns:1
+Difficulty:Easy
+Description:Win this turn.
+[state]
+ActivePlayer=human
+ActivePhase=untap
+HumanLife=93
+AILife=49
+humanhand=Psionic Blast; Flight; Dream Coat; Animate Artifact; Magical Hack; Disenchant; Crumble;
+humanprecast=
+humangraveyard=Time Walk; War Barge; Blood of the Martyr; Desert Twister;
+humanlibrary=Ifh-Biff Efreet; Karma; Recall;
+humanBattlefield=Stone Calendar; Stone Calendar; Blue Mana Battery; Tropical Island; Tundra; Tundra; Island; Island; City of Shadows; Hollow Trees|Tapped; Forest; Savannah; City of Brass; Sylvan Library; Time Elemental; Rubinia Soulsinger|Tapped; Serra Angel; Northern Paladin; Ley Druid; Copy Artifact; Fountain of Youth;
+aibattlefield=Presence of the Master; Spiritual Sanctuary; Mirror Universe|Tapped; Will O' The Wisp; Wall of Air; Farrelite Priest; Kismet; Millstone|Tapped; Millstone|Tapped; Mox Pearl; Scrubland; Forcefield; Dark Sphere; Island Sanctuary; Urborg|Tapped; Underground Sea|Tapped; Island|Tapped; Black Mana Battery; Svyelunite Temple; The Abyss; Ivory Tower;
+aiprecast=
+aigraveyard=
+ailibrary=
+aiexile=
