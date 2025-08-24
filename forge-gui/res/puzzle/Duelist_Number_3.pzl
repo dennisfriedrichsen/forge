@@ -1,0 +1,21 @@
+[metadata]
+Name:Duelist - thirtysomething
+Goal:Win
+Turns:1
+Difficulty:Easy
+Description:Win this turn.
+[state]
+ActivePlayer=human
+ActivePhase=main1
+HumanLife=1
+AILife=39
+humanhand=Enchantment Alteration; Pyrotechnics; Blood Lust; Fork; Divine Offering; Energy Tap; Shatterstorm; Caverns of Despair
+humanprecast=
+humangraveyard=
+humanlibrary=
+humanBattlefield=Celestial Prism; Orcish Oriflamme; Howling Mine; Red Mana Battery|Counters:CHARGE=8; Mox Sapphire; Icy Manipulator; Conservator; Triskelion|Counters:P1P1=3|Id:16; Immolation|AttachedTo:16; Rasputin Dreamweaver|Id:18|Counters:DREAM=7; Gauntlets of Chaos; Wall of Earth; Control Magic|AttachedTo:41;
+aibattlefield=Paralyze|AttachedTo:18; Mana Matrix; Abomination|Id:26; Flight|AttachedTo:26; Aladdin's Lamp|Id:28; Animate Artifact|AttachedTo:28; Ichneumon Druid|Id:30; Regeneration|AttachedTo:30; Mesa Pegasus|Id:32; Artifact Ward|AttachedTo:32; Holy Armor|AttachedTo:32; Demonic Hordes; Wall of Stone; Flying Carpet; Nether Void; Birds of Paradise|Tapped; Bayou|Tapped; Savannah|Tapped; Tropical Island|Tapped; Plateau|Tapped; Badlands|Tapped; Scrubland|Tapped; Black Mana Battery|Tapped; Personal Incarnation|Id:41; Spirit Shackle|AttachedTo:41;
+aiprecast=
+aigraveyard=
+ailibrary=
+aiexile=
