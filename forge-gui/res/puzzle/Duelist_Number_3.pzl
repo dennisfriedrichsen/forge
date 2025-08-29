@@ -1,14 +1,15 @@
 [metadata]
-Name:Duelist - thirtysomething (modified)
+Name:Magic the Puzzling - Duelist #3 - thirtysomething (modified)
 Goal:Win
 Turns:1
-Difficulty:Easy
-Description:Win this turn.
+Difficulty:Hard
+Description:Your opponent is David.  He hit you early, he hit you fast, and he hit you hard.  Luckily, you were able to buy yourself a little time with a few blockers and an Icy Manipulator. David, unfortunately, has made good use of this downtime to destroy all your land (mostly thanks to his Demonic Hordes) and heal himself to a rather comfortable life total. Then last turn, David finally got the edge he needed.  Flight, Flying Carpet, and a Mesa Pegasus gave him the ability to fly. Festival put off the inevitable for another turn, but since your Icy Manipulator can only take care of one flier and you have nothing else to block with, David has you next turn.  All seemed lost until you drew a Fork, and then you saw the answer.  It's the beginning of your main phase.  Finish David off this turn without dying.
 [state]
 ActivePlayer=human
 ActivePhase=main1
 HumanLife=1
 AILife=39
+ainame=David
 humanhand=Enchantment Alteration; Pyrotechnics; Blood Lust; Fork; Divine Offering; Energy Tap; Shatterstorm; Caverns of Despair
 humanprecast=
 humangraveyard=
