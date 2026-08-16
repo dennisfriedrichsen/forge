@@ -1,0 +1,23 @@
+[metadata]
+Name:Magic the Puzzling - Duelist #6 - Final Blow
+Goal:Win
+Turns:1
+Difficulty:Common
+Description:Your opponent is Truc. You are playing the third duel of what has been a grueling match. You are about to draw the last card in your library (which you know is a Giant Growth), so you realize it is imperative that you defeat Truc this turn. Because you've seen his deck throughout the match, you realize that the three cards in his hand must be three of the following five spells (and no more than one of each): Blue Elemental Blast, Counterspell, Disenchant, Terror, and Unsummon. It is now the beginning of your upkeep. Find a way to defeat Truc this turn regardless of which three cards he has.\n\nForge's static puzzle format cannot represent an unknown three-card subset, so all five candidates are available to Truc in this implementation. Your solution must withstand the stronger position.
+[state]
+ActivePlayer=human
+ActivePhase=upkeep
+HumanLife=4
+AILife=5
+AIName=Truc
+humanhand=Blood Lust|Set:LEG; Red Elemental Blast|Set:3ED; Lightning Bolt|Set:3ED; Eternal Warrior|Set:LEG;
+humanprecast=
+humangraveyard=
+humanlibrary=Giant Growth|Set:3ED;
+humanBattlefield=Forest|Set:3ED|Art:3; Mishra's Factory|Set:ATQ|Art:3; Strip Mine|Set:ATQ|Art:2; Fellwar Stone|Set:DRK; Mountain|Set:3ED|Art:3; Mountain|Set:3ED|Art:2; Mountain|Set:3ED|Art:2; War Mammoth|Set:3ED; Sisters of the Flame|Set:DRK;
+aihand=Blue Elemental Blast|Set:3ED; Counterspell|Set:3ED; Disenchant|Set:3ED; Terror|Set:3ED; Unsummon|Set:3ED;
+aiprecast=
+aigraveyard=
+ailibrary=
+aibattlefield=Island|Set:3ED|Art:1; Island|Set:3ED|Art:1; Swamp|Set:3ED|Art:2; Plains|Set:3ED|Art:3; Drudge Skeletons|Set:3ED;
+aiexile=
