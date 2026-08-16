@@ -1,0 +1,23 @@
+[metadata]
+Name:Magic the Puzzling - Duelist #4 - Pick a card
+Goal:Survive
+Turns:1
+Difficulty:Common
+Description:Your opponent is Henry. He likes Merfolk. Thanks to a Lord of Atlantis and a Phantasmal Terrain, he has been islandwalking his way to victory. You, on the other hand, are playing a card-denial deck that hasn't quite kicked in like it should. Last turn you used two Visions to check both libraries, and you know that if you could only empty Henry's hand, the tide of the game would turn. You'd better do it soon, though, because you only have three cards left in your library. (And wouldn't you know it, your Feldon's Cane is the last card!)\n\nIt is the beginning of your upkeep phase. Empty Henry's hand, keep Henry from being able to defeat you next turn, and get your Feldon's Cane in play and use it. Oh, and do it all this turn.
+[state]
+ActivePlayer=human
+ActivePhase=upkeep
+HumanLife=6
+AILife=16
+AIName=Henry
+humanhand=Martyr's Cry|Set:DRK; Sinkhole|Set:2ED; Basal Thrull|Set:FEM|Art:4;
+humanprecast=
+humangraveyard=Initiates of the Ebon Hand|Set:FEM|Art:1; Heaven's Gate|Set:LEG;
+humanlibrary=Disenchant|Set:3ED; Hymn to Tourach|Set:FEM|Art:1; Feldon's Cane|Set:ATQ;
+humanBattlefield=Icatian Store|Set:FEM|Counters:STORAGE=2; Ruins of Trokair|Set:FEM; Plains|Set:3ED; Glasses of Urza|Set:3ED; Disrupting Scepter|Set:3ED; Hypnotic Specter|Set:3ED; Scrubland|Set:3ED; Scrubland|Set:3ED|Id:1; City of Shadows|Set:DRK|Counters:STORAGE=4; Ashnod's Altar|Set:ATQ; Cyclopean Tomb|Set:2ED; Hand of Justice|Set:FEM; The Rack|Set:ATQ; Mindstab Thrull|Set:FEM|Art:3; Mindstab Thrull|Set:FEM|Art:2; Icatian Javelineers|Set:FEM|Art:2|Counters:JAVELIN=1;
+aihand=Counterspell|Set:3ED; Jump|Set:3ED; Svyelunite Priest|Set:FEM;
+aiprecast=
+aigraveyard=Flood|Set:DRK; Merseine|Set:FEM|Art:4; Merfolk of the Pearl Trident|Set:3ED;
+ailibrary=Magical Hack|Set:3ED; High Tide|Set:FEM|Art:1; Seasinger|Set:FEM; Unsummon|Set:3ED;
+aibattlefield=Merfolk of the Pearl Trident|Set:3ED; Vodalian Mage|Set:FEM|Art:1; Island|Set:3ED|Art:1; Island|Set:3ED|Art:1; Island|Set:3ED|Art:1|Tapped; Lord of Atlantis|Set:3ED; Vodalian War Machine|Set:FEM; River Merfolk|Set:FEM|Tapped; Vodalian Soldiers|Set:FEM|Art:2|Tapped; Vodalian Soldiers|Set:FEM|Art:3; Sand Silos|Set:FEM|Tapped; Svyelunite Temple|Set:FEM|Tapped; Mox Sapphire|Set:2ED|Tapped; Library of Leng|Set:3ED; Crystal Rod|Set:3ED; Phantasmal Terrain|Set:3ED|AttachedTo:1|ChosenType:Island;
+aiexile=
