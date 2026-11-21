@@ -65,6 +65,7 @@ public class PlayerControllerAi extends PlayerController {
     private final AiController brains;
 
     private boolean pilotsNonAggroDeck = false;
+    private ManaCostShard shardBeingPaid;
 
     /** Snapshot the whole game before a targeted AI cast so it can be taken back. Heavy on memory, so off. */
     public static final boolean AI_ROLLBACK = false;
@@ -77,6 +78,17 @@ public class PlayerControllerAi extends PlayerController {
 
     public boolean pilotsNonAggroDeck() {
         return pilotsNonAggroDeck;
+    }
+
+    // lets mana triggered while paying, like Fertile Ground's, take this shard's color
+    public void runPayingShard(ManaCostShard shard, Runnable proc) {
+        ManaCostShard previous = shardBeingPaid;
+        shardBeingPaid = shard;
+        try {
+            proc.run();
+        } finally {
+            shardBeingPaid = previous;
+        }
     }
 
     public void setupAutoProfile(Deck deck) {
@@ -1263,6 +1275,9 @@ public class PlayerControllerAi extends PlayerController {
         // You may switch on sa.getApi() here and use sa.getParam("AILogic")
         CardCollectionView hand = player.getCardsIn(ZoneType.Hand);
         if (sa.getApi() == ApiType.Mana) {
+            if (shardBeingPaid != null) {
+                return ComputerUtilMana.chooseColorForShard(shardBeingPaid, colors.getColor());
+            }
             hand = CardCollection.combine(hand, player.getCardsIn(ZoneType.Stack));
         }
         final String c = ComputerUtilCard.getMostProminentColor(hand);
@@ -1491,6 +1506,20 @@ public class PlayerControllerAi extends PlayerController {
 
     @Override
     public void orderAndPlaySimultaneousSa(List<SpellAbility> activePlayerSAs) {
+        final AiController brains = getAi();
+        final int previousValakutTriggers = brains.getSimultaneousValakutDamageTriggers();
+        int valakutTriggers = 0;
+        for (final SpellAbility pending : activePlayerSAs) {
+            final Card host = pending.getHostCard();
+            if (pending.isTrigger() && pending.getApi() == forge.game.ability.ApiType.DealDamage
+                    && host != null && "Valakut, the Molten Pinnacle".equals(host.getName())) {
+                valakutTriggers++;
+            }
+        }
+        if (valakutTriggers > 0) {
+            brains.setSimultaneousValakutDamageTriggers(valakutTriggers);
+        }
+        try {
         for (final SpellAbility sa : orderSimultaneousSa(activePlayerSAs)) {
             if (playedByTeammate(sa)) {
                 continue;
@@ -1518,6 +1547,9 @@ public class PlayerControllerAi extends PlayerController {
                 // need finally add the new spell to the stack
                 getGame().getStack().add(sa);
             }
+        }
+        } finally {
+            brains.setSimultaneousValakutDamageTriggers(previousValakutTriggers);
         }
     }
 
@@ -1605,7 +1637,12 @@ public class PlayerControllerAi extends PlayerController {
                 return ComputerUtil.playStack(tgtSA, player, getGame());
             }
             // TODO if mandatory AI is only forced to use mana when it's already in the pool
-            if (brains.canPlayFromEffectAI(spell, !optional, noManaCost) == AiPlayDecision.WillPlay || !optional) {
+            // Suspend is optional in the rules, but declining after the last TIME counter leaves the card exiled.
+            final Card host = tgtSA.getHostCard();
+            final boolean lastSuspendCast = tgtSA.isCastFromPlayEffect() && host != null
+                    && host.isInZone(ZoneType.Exile) && host.hasKeyword(Keyword.SUSPEND)
+                    && host.getCounters(CounterEnumType.TIME) == 0;
+            if (brains.canPlayFromEffectAI(spell, !optional || lastSuspendCast, noManaCost) == AiPlayDecision.WillPlay || !optional) {
                 return ComputerUtil.playStack(tgtSA, player, getGame());
             }
             return false; // didn't play spell
