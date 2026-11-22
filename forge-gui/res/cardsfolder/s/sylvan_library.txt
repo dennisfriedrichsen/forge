@@ -3,7 +3,7 @@ ManaCost:1 G
 Types:Enchantment
 T:Mode$ Phase | Phase$ Draw | ValidPlayer$ You | TriggerZones$ Battlefield | Execute$ TrigDraw | TriggerDescription$ At the beginning of your draw step, you may draw two additional cards. If you do, choose two cards in your hand drawn this turn. For each of those cards, pay 4 life or put the card on top of your library.
 SVar:TrigDraw:AB$ ChooseCard | Cost$ Draw<2/You> | Defined$ You | ChoiceZone$ Hand | Choices$ Card.YouOwn+DrawnThisTurn | Amount$ X | MinAmount$ 0 | ChoiceTitle$ Choose up to two cards drawn this turn to put on top of your library. You pay 4 life for each of the two you keep. | AILogic$ WorstCard | SubAbility$ DBReturn
-SVar:DBReturn:DB$ ChangeZone | Defined$ ChosenCard | Origin$ Hand | Destination$ Library | LibraryPosition$ 0 | SubAbility$ DBPayForKept
+SVar:DBReturn:DB$ ChangeZone | Defined$ ChosenCard | Origin$ Hand | Destination$ Library | LibraryPosition$ 0 | Reorder$ True | SubAbility$ DBPayForKept
 SVar:DBPayForKept:DB$ Repeat | RepeatSubAbility$ DBPayOrReturn | MaxRepeat$ Kept | StackDescription$ None | SubAbility$ DBCleanup
 SVar:DBPayOrReturn:DB$ ChangeZone | Origin$ Hand | Destination$ Library | ChangeType$ Card.YouOwn+DrawnThisTurn | ChangeNum$ 1 | Mandatory$ True | NoReveal$ True | UnlessCost$ Mandatory PayLife<4> | UnlessPayer$ You
 SVar:DBCleanup:DB$ Cleanup | ClearChosenCard$ True

@@ -1298,7 +1298,7 @@ public class ChangeZoneEffect extends SpellAbilityEffect {
                 player.shuffle(sa);
             }
 
-            if (sa.hasParam("Reorder")) {
+            if (sa.hasParam("Reorder") && chosenCards.size() > 1) {
                 chosenCards = new CardCollection(decider.getController().orderMoveToZoneList(chosenCards, destination, sa));
             }
 

@@ -34,6 +34,7 @@ public class SylvanLibraryTest extends AITest {
     private static class Scripted extends PlayerControllerAi {
         private final int toReturn;
         boolean askedToConfirmPayment;
+        int orderPrompts;
 
         Scripted(final Game game, final Player p, final int toReturn) {
             super(game, p, p.getLobbyPlayer());
@@ -54,6 +55,13 @@ public class SylvanLibraryTest extends AITest {
         public boolean payCostToPreventEffect(final Cost cost, final SpellAbility sa, final boolean alreadyPaid,
                 final FCollectionView<Player> allPayers) {
             return PlaySpellAbility.payCostDuringAbilityResolve(this, getPlayer(), cost, sa, null);
+        }
+
+        @Override
+        public CardCollectionView orderMoveToZoneList(final CardCollectionView cards, final ZoneType destinationZone,
+                final SpellAbility source) {
+            orderPrompts++;
+            return cards;
         }
 
         @Override
@@ -87,6 +95,7 @@ public class SylvanLibraryTest extends AITest {
         assertEquals(p.getCardsIn(ZoneType.Hand).size(), 1);
         assertEquals(p.getCardsIn(ZoneType.Library).size(), 9);
         assertFalse(c.askedToConfirmPayment);
+        assertEquals(c.orderPrompts, 1, "two cards go on top, so ask which goes first");
     }
 
     @Test
@@ -98,6 +107,7 @@ public class SylvanLibraryTest extends AITest {
         assertEquals(p.getLife(), 16);
         assertEquals(p.getCardsIn(ZoneType.Hand).size(), 2);
         assertFalse(c.askedToConfirmPayment, "the keep decision was already made, so don't ask to pay");
+        assertEquals(c.orderPrompts, 0, "one card going back has no order to choose");
     }
 
     @Test
@@ -109,6 +119,7 @@ public class SylvanLibraryTest extends AITest {
         assertEquals(p.getLife(), 12, "only two of the three drawn cards are chosen, so pay twice");
         assertEquals(p.getCardsIn(ZoneType.Hand).size(), 3);
         assertFalse(c.askedToConfirmPayment);
+        assertEquals(c.orderPrompts, 0);
     }
 
     @Test
