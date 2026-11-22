@@ -11,6 +11,7 @@ import forge.game.GameActionUtil;
 import forge.game.card.Card;
 import forge.game.card.CardView;
 import forge.game.card.CardCollection;
+import forge.game.keyword.Keyword;
 import forge.game.mana.ManaCostBeingPaid;
 import forge.game.player.PlaySpellAbility;
 import forge.game.player.Player;
@@ -105,6 +106,35 @@ public abstract class InputPayMana extends InputSyncronizedBase {
         SpellAbility spellAbility = getController().getAbilityToPlay(card, manaAbilities, triggerEvent);
         if (spellAbility != null) {
             return activateManaAbility(card, spellAbility);
+        }
+        return true;
+    }
+
+    /**
+     * Whether {@code ma} can make an arbitrary color when only generic mana is left to pay, without
+     * asking the player. False when the color could still matter: the spell counts colors spent
+     * (Converge, Sunburst, "was spent to cast"), the card avoids a downside with certain colors, the
+     * ability makes more than one mana (the rest would float), or it isn't a plain, undoable ability.
+     */
+    static boolean isAnyColorForGenericSafe(final SpellAbility ma, final SpellAbility saPaidFor) {
+        if (!ma.isUndoable() || !ma.getPayCosts().isRenewableResource() || ma.getSubAbility() != null
+                || ma.isManaCannotCounter(saPaidFor)) {
+            return false;
+        }
+        if (ma.totalAmountOfManaGenerated(saPaidFor, true) != 1) {
+            return false;
+        }
+        if (saPaidFor.tracksManaSpent()) {
+            return false;
+        }
+        final Card host = saPaidFor.getHostCard();
+        if (host != null) {
+            if (host.hasKeyword(Keyword.SUNBURST) || host.hasSVar("ManaNeededToAvoidNegativeEffect")) {
+                return false;
+            }
+            if (host.getRules() != null && host.getRules().getOracleText().contains("mana spent")) {
+                return false;
+            }
         }
         return true;
     }
@@ -322,6 +352,11 @@ public abstract class InputPayMana extends InputSyncronizedBase {
             chosen = abilitiesMap.size() > 1 && choice ? abilitiesMap.get(getController().getGui().one(Localizer.getInstance().getMessage("lblChooseManaAbility"),  choices)) : abilitiesMap.get(choices.get(0));
         } else {
             chosen = chosenAbility;
+            // Desktop picks the ability before calling this, so the express choice above never ran.
+            // With only generic mana left any color pays it, so don't ask which color to make.
+            if (colorNeeded == 0 && isAnyColorForGenericSafe(chosen, saPaidFor)) {
+                colorNeeded = MagicColor.WHITE;
+            }
         }
 
         ColorSet colors = ColorSet.fromMask(0 == colorNeeded ? colorCanUse : colorNeeded);
