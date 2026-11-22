@@ -192,8 +192,13 @@ public class PlaySpellAbility {
 
             boolean mayRemovePart = true;
 
+            if (mandatory && part instanceof CostPayLife) {
+                // "pay N life. If you can't, ..." (UnlessCost$ Mandatory PayLife<N>): nothing to confirm,
+                // and canPay above already checked the payment is possible
+                part.payAsDecided(p, PaymentDecision.number(part.getAbilityAmount(sourceAbility)), sourceAbility, hcd.isEffect());
+            }
             // simplified costs that can use the HCD
-            if (part instanceof CostPayLife
+            else if (part instanceof CostPayLife
                     || part instanceof CostDraw
                     || part instanceof CostGainLife
                     || part instanceof CostFlipCoin
