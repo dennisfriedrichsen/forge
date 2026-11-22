@@ -8,9 +8,12 @@ import forge.card.MagicColor;
 import forge.card.mana.ManaAtom;
 import forge.game.Game;
 import forge.game.GameActionUtil;
+import forge.game.ability.AbilityUtils;
+import forge.game.ability.ApiType;
 import forge.game.card.Card;
 import forge.game.card.CardView;
 import forge.game.card.CardCollection;
+import forge.game.card.CardCollectionView;
 import forge.game.keyword.Keyword;
 import forge.game.mana.ManaCostBeingPaid;
 import forge.game.player.PlaySpellAbility;
@@ -99,6 +102,11 @@ public abstract class InputPayMana extends InputSyncronizedBase {
         }
 
         List<SpellAbility> manaAbilities = getAllManaAbilities(card);
+        // Skip the menu when only one of the card's abilities produces a color the cost still needs
+        SpellAbility obvious = findObviousManaAbility(manaAbilities, manaCost, saPaidFor, player);
+        if (obvious != null) {
+            return activateManaAbility(card, obvious);
+        }
         // Desktop Forge floating menu functionality
         if (manaAbilities.size() == 1) {
             return activateManaAbility(card, manaAbilities.get(0));
@@ -141,6 +149,63 @@ public abstract class InputPayMana extends InputSyncronizedBase {
 
     protected List<SpellAbility> getAllManaAbilities(Card card) {
         return getAllManaAbilities(card, player);
+    }
+
+    /**
+     * Returns the single ability among {@code abilities} that is the only sensible way to pay the
+     * remaining cost (e.g. tapping Savannah when {G} is still owed), or null when the player should
+     * be asked. Mirrors the express mana choice in {@link #activateManaAbility(Card, SpellAbility)}:
+     * it never guesses when the spell tracks the mana spent, when only generic mana is left, or when
+     * an ability isn't a plain, undoable tap-for-mana.
+     */
+    static SpellAbility findObviousManaAbility(final List<SpellAbility> abilities, final ManaCostBeingPaid manaCost,
+            final SpellAbility saPaidFor, final Player player) {
+        if (abilities.size() < 2 || saPaidFor.tracksManaSpent()) {
+            return null;
+        }
+
+        byte colorCanUse = 0;
+        byte colorNeeded = 0;
+        for (final byte color : ManaAtom.MANATYPES) {
+            if (manaCost.isAnyPartPayableWith(color, player.getManaPool())) { colorCanUse |= color; }
+            if (manaCost.needsColor(color, player.getManaPool()))           { colorNeeded |= color; }
+        }
+        if (colorNeeded == 0) { // only generic left: any ability works, so the choice is the player's
+            return null;
+        }
+        if (manaCost.isAnyPartPayableWith((byte) ManaAtom.GENERIC, player.getManaPool())) {
+            colorCanUse |= ManaAtom.GENERIC;
+        }
+
+        SpellAbility match = null;
+        int amountOfMana = -1;
+        for (final SpellAbility ma : abilities) {
+            if (!ma.isManaAbilityFor(saPaidFor, colorCanUse)) {
+                continue;
+            }
+            if (!isExpressChoiceSafe(ma, saPaidFor)) {
+                return null;
+            }
+            int maAmount = ma.totalAmountOfManaGenerated(saPaidFor, true);
+            if (amountOfMana == -1) {
+                amountOfMana = maAmount;
+            } else if (amountOfMana != maAmount) {
+                return null;
+            }
+            if (ma.isManaAbilityFor(saPaidFor, colorNeeded)) {
+                if (match != null) {
+                    return null; // more than one ability can produce a needed color
+                }
+                match = ma;
+            }
+        }
+        return match;
+    }
+
+    /** Whether an ability is simple enough that picking it on the player's behalf can't hurt. */
+    private static boolean isExpressChoiceSafe(final SpellAbility ma, final SpellAbility saPaidFor) {
+        return ma.isUndoable() && ma.getPayCosts().isRenewableResource() && ma.getSubAbility() == null
+                && !ma.isManaCannotCounter(saPaidFor);
     }
 
     /**
@@ -293,8 +358,7 @@ public abstract class InputPayMana extends InputSyncronizedBase {
                 abilitiesMap.put(ma.getView(), ma);
 
                 // skip express mana if the ability is not undoable or reusable
-                if (!ma.isUndoable() || !ma.getPayCosts().isRenewableResource() || ma.getSubAbility() != null
-                        || ma.isManaCannotCounter(saPaidFor)) {
+                if (!isExpressChoiceSafe(ma, saPaidFor)) {
                     guessAbilityWithRequiredColors = false;
                 }
             }
@@ -454,12 +518,40 @@ public abstract class InputPayMana extends InputSyncronizedBase {
         if (supportAutoPay()) {
             ensureAutoPayManaSources();
             if (autoPayManaSources != null) { //enabled Auto button if mana cost can be paid
-                getController().getGui().updateButtons(getOwner(), Localizer.getInstance().getMessage("lblAuto"), Localizer.getInstance().getMessage("lblCancel"), true, !mandatory, true);
+                // Don't default to paying when declining is allowed and paying would accomplish nothing
+                final boolean focusAuto = mandatory || !isPaymentPointless();
+                getController().getGui().updateButtons(getOwner(), Localizer.getInstance().getMessage("lblAuto"), Localizer.getInstance().getMessage("lblCancel"), true, !mandatory, focusAuto);
             }
         }
         // Just-tapped sources leave the highlights, and the AI's auto-tap plan is emphasized
         showSelection();
         showMessage(getMessage(), saPaidFor.getView());
+    }
+
+    /**
+     * Whether paying this cost would have no effect, e.g. Mana Vault's optional
+     * "pay {4}, untap this artifact" trigger while it is already untapped.
+     * Used only to pick the default (focused) button, never to block payment.
+     */
+    protected boolean isPaymentPointless() {
+        if (saPaidFor == null || saPaidFor.getApi() != ApiType.Untap || saPaidFor.getSubAbility() != null) {
+            return false;
+        }
+        final CardCollectionView toUntap;
+        if (saPaidFor.usesTargeting()) {
+            toUntap = saPaidFor.getTargets().getTargetCards();
+        } else {
+            toUntap = AbilityUtils.getDefinedCards(saPaidFor.getHostCard(), saPaidFor.getParamOrDefault("Defined", "Self"), saPaidFor);
+        }
+        if (toUntap.isEmpty()) {
+            return false;
+        }
+        for (final Card c : toUntap) {
+            if (c.isTapped()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
