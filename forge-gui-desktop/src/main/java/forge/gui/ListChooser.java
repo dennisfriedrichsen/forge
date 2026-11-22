@@ -199,6 +199,10 @@ public class ListChooser<T> {
             @Override public void keyPressed(final KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     ListChooser.this.commit();
+                } else if (e.getKeyCode() == KeyEvent.VK_SPACE && !toggleOnClick && e.getModifiersEx() == 0) {
+                    // Space accepts the highlighted choice, as it presses the default button in other prompts
+                    e.consume();
+                    ListChooser.this.commit();
                 }
             }
         });
