@@ -25,6 +25,8 @@ public class InputSelectStackItems extends InputSyncronizedBase {
     private boolean allowCancel;
     private boolean cancelled;
     private String message = "Select a target on the stack (%d more)";
+    // pre-selected default, so OK (and Space) can accept it; the player's first tap replaces it
+    private SpellAbilityStackInstance suggested;
 
     public InputSelectStackItems(final PlayerControllerHuman controller, final int min, final int max,
                                  final List<SpellAbilityStackInstance> choices, final SpellAbility sa) {
@@ -39,6 +41,17 @@ public class InputSelectStackItems extends InputSyncronizedBase {
     public void setCancelAllowed(final boolean allow) { allowCancel = allow; }
     public boolean hasCancelled() { return cancelled; }
     public List<SpellAbilityStackInstance> getSelected() { return selected; }
+
+    /**
+     * When a target is required, pre-selects the top choice so OK is enabled from the start and Space accepts it.
+     * The first tap in the stack view replaces this suggestion, so tapping works as it did without it.
+     */
+    public void suggestTopChoice() {
+        if (min > 0 && !choices.isEmpty() && selected.isEmpty()) {
+            suggested = choices.get(0);
+            selected.add(suggested);
+        }
+    }
 
     @Override
     protected Selection getSelection() {
@@ -74,6 +87,11 @@ public class InputSelectStackItems extends InputSyncronizedBase {
     }
 
     private boolean toggle(final SpellAbilityStackInstance si) {
+        if (suggested != null) {
+            // a tap is the player's own pick, even on the suggested item
+            selected.remove(suggested);
+            suggested = null;
+        }
         final boolean wasSelected = selected.remove(si);
         if (!wasSelected) {
             selected.add(si);

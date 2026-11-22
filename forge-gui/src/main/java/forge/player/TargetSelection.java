@@ -320,6 +320,7 @@ public class TargetSelection {
         final InputSelectStackItems inp = new InputSelectStackItems(controller, min, max, choices, ability);
         inp.setMessage(TextUtil.fastReplace(getTgt().getVTSelection(), "CARDNAME", ability.getHostCard().toString()));
         inp.setCancelAllowed(!mandatory);
+        inp.suggestTopChoice();
         inp.showAndWait();
 
         if (inp.hasCancelled()) {
