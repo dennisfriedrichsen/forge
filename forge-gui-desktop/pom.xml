@@ -414,224 +414,107 @@ try {
 
     <profiles>
         <profile>
-            <properties>
-                <license.file.name>"LICENSE.txt"</license.file.name>
-                <changes.file.name>"CHANGES.txt"</changes.file.name>
-                <readme.file.name>"INSTALLATION.txt"</readme.file.name>
-                <forge.file.name>"Forge"</forge.file.name>
-                <applications.file.name>"Applications"</applications.file.name>
-            </properties>
+            <!--
+              macOS: builds a self-contained Forge.app (bundles its own Java runtime, so no Java install
+              is needed) and a drag-to-Applications Forge-<version>.dmg in target/osx/.
+              Must run on macOS with a JDK 17+ (needs the JDK's jpackage tool). The app matches the
+              architecture of the JDK running the build (arm64 or x64).
+                mvn -pl forge-gui-desktop -am -P osx package -DskipTests
+            -->
             <id>osx</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>3.0.0</version>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.apache.ant</groupId>
-                                <artifactId>ant-nodeps</artifactId>
-                                <version>1.8.1</version>
-                            </dependency>
-                        </dependencies>
-                        <executions>
-                            <execution>
-                                <id>osx-appbundle</id>
-                                <phase>pre-integration-test</phase>
-                                <configuration>
-                                    <target>
-                                        <mkdir dir="${project.build.directory}/${project.build.finalName}-osx" />
-                                        <copy todir="${project.build.directory}/${project.build.finalName}-osx">
-                                            <fileset dir="${basedir}/../forge-gui/" includes="LICENSE.txt" />
-                                            <fileset dir="${basedir}/../forge-gui-desktop/target/" includes="CHANGES.txt" />
-                                            <fileset dir="${basedir}/../forge-gui/release-files/" includes="CONTRIBUTORS.txt" />
-                                            <fileset dir="${basedir}/../forge-gui/release-files/" includes="ISSUES.txt" />
-                                            <fileset dir="${basedir}/../forge-gui/release-files/" includes="INSTALLATION.txt" />
-                                            <fileset dir="${basedir}/" includes="sentry.properties" />
-                                        </copy>
-                                        <taskdef name="bundleapp" classpath="${basedir}/../forge-gui/${configSourceDirectory}/appbundler-1.0-custom.jar" classname="com.oracle.appbundler.AppBundlerTask" />
-                                        <bundleapp outputdirectory="${project.build.directory}/${project.build.finalName}-osx" name="${project.name}" displayname="${project.name}" shortversion="${project.version}" identifier="forge.view.Main" icon="${basedir}/${configSourceDirectory}/Forge.icns" applicationCategory="public.app-category.games" mainclassname="forge.view.Main">
-                                            <classpath file="${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar" />
-                                            <classpath file="${basedir}/../forge-gui/forge.profile.properties.example" />
-                                            <option value="-Dapple.laf.useScreenMenuBar=true" />
-                                            <option value="-Dcom.apple.macos.use-file-dialog-packages=true" />
-                                            <option value="-Dcom.apple.macos.useScreenMenuBar=true" />
-                                            <option value="-Dcom.apple.mrj.application.apple.menu.about.name=Forge" />
-                                            <option value="-Dcom.apple.smallTabs=true" />
-                                            <option value="-Xmx4096M" />
-                                            <option value="-Dapp.dir=$APP_ROOT/Contents/Resources/" />
-                                        </bundleapp>
-                                        <copy todir="${project.build.directory}/${project.build.finalName}-osx/Forge.app/Contents/Resources/res">
-                                            <fileset dir="${basedir}/../forge-gui/res" excludes="**/cardsfolder/**" />
-                                        </copy>
-                                        <mkdir dir="${project.build.directory}/${project.build.finalName}-osx/Forge.app/Contents/Resources/res/cardsfolder" />
-                                        <zip destfile="${project.build.directory}/${project.build.finalName}-osx/Forge.app/Contents/Resources/res/cardsfolder/cardsfolder.zip" basedir="${basedir}/../forge-gui/res/cardsfolder" level="1" />
-                                        <symlink link="${project.build.directory}/${project.build.finalName}-osx/Applications" resource="/Applications" />
-                                        <exec executable="${basedir}/../forge-gui/${configSourceDirectory}/create-dmg" failonerror="false">
-                                            <arg line="--volname ${project.name}-${project.version} --background ${basedir}/../forge-gui/${configSourceDirectory}/backgroundImage.jpg --window-size 700 419 --icon-size 64 --icon ${forge.file.name} 141 283 --icon ${applications.file.name} 452 283 --icon ${changes.file.name} 645 80 --icon ${license.file.name} 645 200 --icon ${readme.file.name} 645 320 ${project.build.directory}/${project.build.finalName}.dmg ${project.build.directory}/${project.build.finalName}-osx" />
-                                        </exec>
-                                        <tar basedir="${project.build.directory}" includes="${project.build.finalName}.dmg" destfile="${project.build.directory}/${project.build.finalName}-osx.tar.bz2" compression="bzip2" />
-                                        <!--<symlink link="${project.build.directory}/${project.build.finalName}-osx/Applications" action="delete" /> -->
-                                        <exec executable="rm" failonerror="false">
-                                            <arg line="-f ${project.build.directory}/${project.build.finalName}-osx/Applications" />
-                                        </exec>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>3.6.0</version>
-                        <executions>
-                            <execution>
-                                <id>released-version</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>released-version</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>parse-version</id>
-                                <goals>
-                                    <goal>parse-version</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>attach-distribution-osx</id>
-                                <phase>post-integration-test</phase>
-                                <goals>
-                                    <goal>attach-artifact</goal>
-                                </goals>
-                                <configuration>
-                                    <artifacts>
-                                        <artifact>
-                                            <file>${project.build.directory}/${project.build.finalName}-osx.tar.bz2
-                                            </file>
-                                            <type>tar.bz2</type>
-                                            <classifier>osx</classifier>
-                                        </artifact>
-                                    </artifacts>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
             <properties>
-                <license.file.name>"LICENSE.txt"</license.file.name>
-                <changes.file.name>"CHANGES.txt"</changes.file.name>
-                <readme.file.name>"INSTALLATION.txt"</readme.file.name>
-                <forge.file.name>"Forge"</forge.file.name>
-                <applications.file.name>"Applications"</applications.file.name>
+                <osx.input>${project.build.directory}/jpackage-input</osx.input>
+                <osx.dist>${project.build.directory}/osx</osx.dist>
             </properties>
-            <id>osx-release</id>
             <build>
                 <plugins>
                     <plugin>
+                        <!-- forge.exe is Windows-only, and launch4j's bundled windres is x86-only (fails on Apple Silicon) -->
+                        <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                        <artifactId>launch4j-maven-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>3.0.0</version>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.apache.ant</groupId>
-                                <artifactId>ant-nodeps</artifactId>
-                                <version>1.8.1</version>
-                            </dependency>
-                        </dependencies>
+                        <version>3.1.0</version>
                         <executions>
                             <execution>
-                                <id>osx-appbundle</id>
-                                <phase>pre-integration-test</phase>
-                                <configuration>
-                                    <target>
-                                        <mkdir dir="${project.build.directory}/${project.build.finalName}-osx" />
-                                        <copy todir="${project.build.directory}/${project.build.finalName}-osx">
-                                            <fileset dir="${basedir}/../forge-gui/" includes="LICENSE.txt" />
-                                            <fileset dir="${basedir}/../forge-gui/" includes="README.txt" />
-                                            <fileset dir="${basedir}/" includes="sentry.properties" />
-                                        </copy>
-                                        <taskdef name="bundleapp" classpath="${basedir}/../forge-gui/${configSourceDirectory}/appbundler-1.0-custom.jar" classname="com.oracle.appbundler.AppBundlerTask" />
-                                        <bundleapp outputdirectory="${project.build.directory}/${project.build.finalName}-osx" name="${project.name}" displayname="${project.name}" shortversion="${project.version}" identifier="forge.view.Main" icon="${basedir}/${configSourceDirectory}/Forge.icns" applicationCategory="public.app-category.games" mainclassname="forge.view.Main">
-                                            <classpath file="${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar" />
-                                            <classpath file="${basedir}/../forge-gui/forge.profile.properties.example" />
-                                            <option value="-Dapple.laf.useScreenMenuBar=true" />
-                                            <option value="-Dcom.apple.macos.use-file-dialog-packages=true" />
-                                            <option value="-Dcom.apple.macos.useScreenMenuBar=true" />
-                                            <option value="-Dcom.apple.mrj.application.apple.menu.about.name=Forge" />
-                                            <option value="-Dcom.apple.smallTabs=true" />
-                                            <option value="-Xmx4096M" />
-                                            <option value="-Dapp.dir=$APP_ROOT/Contents/Resources/" />
-                                        </bundleapp>
-                                        <copy todir="${project.build.directory}/${project.build.finalName}-osx/Forge.app/Contents/Resources/res">
-                                            <fileset dir="${basedir}/../forge-gui/res" excludes="**/cardsfolder/**" />
-                                        </copy>
-                                        <mkdir dir="${project.build.directory}/${project.build.finalName}-osx/Forge.app/Contents/Resources/res/cardsfolder" />
-                                        <zip destfile="${project.build.directory}/${project.build.finalName}-osx/Forge.app/Contents/Resources/res/cardsfolder/cardsfolder.zip" basedir="${basedir}/../forge-gui/res/cardsfolder" level="1" />
-                                        <symlink link="${project.build.directory}/${project.build.finalName}-osx/Applications" resource="/Applications" />
-                                        <exec executable="${basedir}/../forge-gui/${configSourceDirectory}/create-dmg" failonerror="false">
-                                            <arg line="--volname ${project.name}-${project.version} --background ${basedir}/../forge-gui/${configSourceDirectory}/backgroundImage.jpg --window-size 700 419 --icon-size 64 --icon ${forge.file.name} 141 283 --icon ${applications.file.name} 452 283 --icon ${changes.file.name} 645 80 --icon ${license.file.name} 645 200 --icon ${readme.file.name} 645 320 ${project.build.directory}/${project.build.finalName}.dmg ${project.build.directory}/${project.build.finalName}-osx" />
-                                        </exec>
-                                        <tar basedir="${project.build.directory}" includes="${project.build.finalName}.dmg" destfile="${project.build.directory}/${project.build.finalName}-osx.tar.bz2" compression="bzip2" />
-                                        <!--<symlink link="${project.build.directory}/${project.build.finalName}-osx/Applications" action="delete" /> -->
-                                        <exec executable="rm" failonerror="false">
-                                            <arg line="-f ${project.build.directory}/${project.build.finalName}-osx/Applications" />
-                                        </exec>
-                                    </target>
-                                </configuration>
+                                <id>osx-app</id>
+                                <phase>package</phase>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>3.6.0</version>
-                        <executions>
-                            <execution>
-                                <id>released-version</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>released-version</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>parse-version</id>
-                                <goals>
-                                    <goal>parse-version</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>attach-distribution-osx</id>
-                                <phase>post-integration-test</phase>
-                                <goals>
-                                    <goal>attach-artifact</goal>
-                                </goals>
                                 <configuration>
-                                    <artifacts>
-                                        <artifact>
-                                            <file>${project.build.directory}/${project.build.finalName}-osx.tar.bz2
-                                            </file>
-                                            <type>tar.bz2</type>
-                                            <classifier>osx</classifier>
-                                        </artifact>
-                                    </artifacts>
+                                    <target>
+                                        <delete dir="${osx.input}" />
+                                        <delete dir="${osx.dist}" />
+                                        <mkdir dir="${osx.input}" />
+                                        <copy todir="${osx.input}">
+                                            <fileset dir="${project.build.directory}" includes="${project.build.finalName}-jar-with-dependencies.jar" />
+                                            <fileset dir="${project.build.directory}" includes="CHANGES.txt" />
+                                            <fileset dir="${basedir}/../forge-gui/" includes="LICENSE.txt" />
+                                            <fileset dir="${basedir}/../forge-gui/release-files/" includes="CONTRIBUTORS.txt,INSTALLATION.txt,ISSUES.txt" />
+                                            <fileset dir="${basedir}/../forge-gui/">
+                                                <include name="res/**" />
+                                                <exclude name="res/cardsfolder/**" />
+                                            </fileset>
+                                        </copy>
+                                        <mkdir dir="${osx.input}/res/cardsfolder" />
+                                        <zip destfile="${osx.input}/res/cardsfolder/cardsfolder.zip" basedir="${basedir}/../forge-gui/res/cardsfolder" level="1" />
+                                        <!-- jpackage needs a purely numeric version: 2.0.17-SNAPSHOT -> 2.0.17 -->
+                                        <loadresource property="osx.app.version">
+                                            <string value="${project.version}" />
+                                            <filterchain>
+                                                <tokenfilter>
+                                                    <replaceregex pattern="^([0-9]+(\.[0-9]+){0,2}).*$" replace="\1" />
+                                                </tokenfilter>
+                                            </filterchain>
+                                        </loadresource>
+                                        <!-- Forge.app: everything in osx.input lands in Contents/app ($APPDIR) -->
+                                        <exec executable="${java.home}/bin/jpackage" failonerror="true">
+                                            <arg value="--type" /><arg value="app-image" />
+                                            <arg value="--dest" /><arg value="${osx.dist}" />
+                                            <arg value="--name" /><arg value="${project.name}" />
+                                            <arg value="--app-version" /><arg value="${osx.app.version}" />
+                                            <arg value="--vendor" /><arg value="${project.organization.name}" />
+                                            <arg value="--icon" /><arg value="${basedir}/${configSourceDirectory}/Forge.icns" />
+                                            <arg value="--mac-package-identifier" /><arg value="org.cardforge.forge" />
+                                            <arg value="--mac-app-category" /><arg value="card-games" />
+                                            <arg value="--input" /><arg value="${osx.input}" />
+                                            <arg value="--main-jar" /><arg value="${project.build.finalName}-jar-with-dependencies.jar" />
+                                            <arg value="--main-class" /><arg value="forge.view.Main" />
+                                            <arg value="--java-options" /><arg value="${mandatory.java.args} ${addopen.java.args}" />
+                                            <arg value="--java-options" /><arg value="-Dforge.assetsDir=$APPDIR/ -Dapple.awt.application.name=${project.name} -Dcom.apple.macos.useScreenMenuBar=true" />
+                                        </exec>
+                                        <!-- Drag-to-install .dmg: Forge.app next to a link to /Applications -->
+                                        <mkdir dir="${osx.dist}/dmg" />
+                                        <exec executable="ditto" failonerror="true">
+                                            <arg value="${osx.dist}/${project.name}.app" /><arg value="${osx.dist}/dmg/${project.name}.app" />
+                                        </exec>
+                                        <symlink link="${osx.dist}/dmg/Applications" resource="/Applications" />
+                                        <exec executable="hdiutil" failonerror="true">
+                                            <arg value="create" />
+                                            <arg value="-volname" /><arg value="${project.name} ${osx.app.version}" />
+                                            <arg value="-srcfolder" /><arg value="${osx.dist}/dmg" />
+                                            <arg value="-format" /><arg value="UDZO" />
+                                            <arg value="-ov" />
+                                            <arg value="${osx.dist}/${project.name}-${osx.app.version}.dmg" />
+                                        </exec>
+                                        <!-- drop the /Applications link immediately (rm removes the link itself, never its target) -->
+                                        <exec executable="rm" failonerror="true">
+                                            <arg value="${osx.dist}/dmg/Applications" />
+                                        </exec>
+                                        <exec executable="rm" failonerror="true">
+                                            <arg value="-rf" /><arg value="${osx.dist}/dmg" />
+                                        </exec>
+                                    </target>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
-
                 </plugins>
             </build>
         </profile>
