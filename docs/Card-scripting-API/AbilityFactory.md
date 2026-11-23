@@ -35,6 +35,7 @@ Optionally that behaviour is adjusted with these parameters:
 - `UnlessPayer$ {Defined}` (Default: TargetedController) - for changing which players are included
 - `UnlessSwitched$ True` - the cost has to be paid to resolve the ability instead (usually used to handle "any player may pay ...")
 - `UnlessResolveSubs$ {WhenPaid/WhenNotPaid}` - if the subability resolving should depend on the payment 
+- `UnlessDefaultNo$ True` - the human player's "pay this cost?" prompt defaults to No instead of Yes
 
 Read more about it in [Costs](Costs.md)
 
