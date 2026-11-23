@@ -50,8 +50,19 @@ jobs:
           architecture: ${{ matrix.arch }}
           cache: 'maven'
 
+      # A release tag like v2.0.17-dennis.2 becomes the app version (shown in Help > About Forge),
+      # so fork builds are distinguishable from upstream ones; other runs keep the pom's version.
+      - name: Pick the version
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          if [ -n "$TAG" ]; then
+            echo "args=-Drevision=${TAG#v}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build Forge.app and .dmg
-        run: mvn -B -U -pl forge-gui-desktop -am -P osx package -DskipTests
+        run: mvn -B -U -pl forge-gui-desktop -am -P osx package -DskipTests ${{ steps.version.outputs.args }}
 
       - name: Name the .dmg for its architecture
         id: dmg
