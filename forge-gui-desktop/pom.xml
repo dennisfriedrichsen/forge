@@ -501,7 +501,7 @@ try {
                                             <arg value="-srcfolder" /><arg value="${osx.dist}/dmg" />
                                             <arg value="-format" /><arg value="UDZO" />
                                             <arg value="-ov" />
-                                            <arg value="${osx.dist}/${project.name}-${osx.app.version}.dmg" />
+                                            <arg value="${osx.dist}/${project.name}-${project.version}.dmg" />
                                         </exec>
                                         <!-- drop the /Applications link immediately (rm removes the link itself, never its target) -->
                                         <exec executable="rm" failonerror="true">
