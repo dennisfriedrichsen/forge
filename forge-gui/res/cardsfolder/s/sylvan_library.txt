@@ -2,16 +2,16 @@ Name:Sylvan Library
 ManaCost:1 G
 Types:Enchantment
 T:Mode$ Phase | Phase$ Draw | ValidPlayer$ You | TriggerZones$ Battlefield | Execute$ TrigDraw | TriggerDescription$ At the beginning of your draw step, you may draw two additional cards. If you do, choose two cards in your hand drawn this turn. For each of those cards, pay 4 life or put the card on top of your library.
-SVar:TrigDraw:AB$ ChooseCard | Cost$ Draw<2/You> | Defined$ You | ChoiceZone$ Hand | Choices$ Card.YouOwn+DrawnThisTurn | Amount$ X | MinAmount$ 0 | ChoiceTitle$ Choose up to two cards drawn this turn to put on top of your library. You pay 4 life for each of the two you keep. | AILogic$ WorstCard | SubAbility$ DBReturn
-SVar:DBReturn:DB$ ChangeZone | Defined$ ChosenCard | Origin$ Hand | Destination$ Library | LibraryPosition$ 0 | Reorder$ True | SubAbility$ DBPayForKept
-SVar:DBPayForKept:DB$ Repeat | RepeatSubAbility$ DBPayOrReturn | MaxRepeat$ Kept | StackDescription$ None | SubAbility$ DBCleanup
-SVar:DBPayOrReturn:DB$ ChangeZone | Origin$ Hand | Destination$ Library | ChangeType$ Card.YouOwn+DrawnThisTurn | ChangeNum$ 1 | Mandatory$ True | NoReveal$ True | UnlessCost$ Mandatory PayLife<4> | UnlessPayer$ You
+SVar:TrigDraw:AB$ Repeat | Cost$ Draw<2/You> | RepeatSubAbility$ DBResetGoBack | RepeatCheckSVar$ GoBack | RepeatSVarCompare$ EQ1 | SubAbility$ DBReturn
+SVar:DBResetGoBack:DB$ StoreSVar | SVar$ GoBack | Type$ Number | Expression$ 0 | SubAbility$ DBChoose
+SVar:DBChoose:DB$ ChooseCard | Defined$ You | ChoiceZone$ Hand | Choices$ Card.YouOwn+DrawnThisTurn | Amount$ X | MinAmount$ 0 | ChoiceTitle$ Choose up to two cards drawn this turn to put on top of your library. You pay 4 life for each of the two you keep. | AILogic$ WorstCard | SubAbility$ DBConfirmKeep
+SVar:DBConfirmKeep:DB$ StoreSVar | SVar$ GoBack | Type$ Number | Expression$ 1 | UnlessCost$ PayLife<LifeCost> | UnlessPayer$ You | UnlessDefaultNo$ True | ConditionCheckSVar$ Kept | ConditionSVarCompare$ GE1 | StackDescription$ None
+SVar:DBReturn:DB$ ChangeZone | Defined$ ChosenCard | Origin$ Hand | Destination$ Library | LibraryPosition$ 0 | Reorder$ True | SubAbility$ DBCleanup
 SVar:DBCleanup:DB$ Cleanup | ClearChosenCard$ True
 SVar:X:Count$ValidHand Card.YouOwn+DrawnThisTurn/LimitMax.2
-SVar:Returned:Count$ChosenSize
-SVar:LeftInHand:Count$ValidHand Card.YouOwn+DrawnThisTurn
-SVar:DrawnBefore:SVar$LeftInHand/Plus.Returned
-SVar:ChoseTotal:SVar$DrawnBefore/LimitMax.2
-SVar:Kept:SVar$ChoseTotal/Minus.Returned
+SVar:Chosen:Count$ChosenSize
+SVar:Kept:SVar$X/Minus.Chosen
+SVar:LifeCost:SVar$Kept/Times.4
+SVar:GoBack:Number$0
 AI:RemoveDeck:All
 Oracle:At the beginning of your draw step, you may draw two additional cards. If you do, choose two cards in your hand drawn this turn. For each of those cards, pay 4 life or put the card on top of your library.
