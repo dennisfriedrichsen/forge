@@ -22,6 +22,7 @@ import forge.Singletons;
 import forge.error.ExceptionHandler;
 import forge.gui.GuiBase;
 import forge.gui.card.CardReaderExperiments;
+import forge.menus.HelpMenu;
 import forge.util.BuildInfo;
 import io.sentry.Sentry;
 
@@ -102,6 +103,7 @@ public final class Main {
 
         // Start splash screen first, then data models, then controller.
         if (args.length == 0 || "puzzle".equals(mode)) {
+            HelpMenu.installSystemAboutHandler();
             Singletons.initializeOnce(true);
 
             // Controller can now step in and take over.
