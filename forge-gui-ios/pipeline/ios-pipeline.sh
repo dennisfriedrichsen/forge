@@ -136,10 +136,10 @@ ASM="$M2/org/ow2/asm/asm/$ASM_VER/asm-$ASM_VER.jar"
 ASMC="$M2/org/ow2/asm/asm-commons/$ASM_VER/asm-commons-$ASM_VER.jar"
 TOOLS_CP="$ASM:$ASMC:$JV/tools"
 
-RT="$M2/com/mobidevelop/robovm/robovm-rt/2.3.23/robovm-rt-2.3.23.jar"
-ROBOVM_OBJC="$M2/com/mobidevelop/robovm/robovm-objc/2.3.23/robovm-objc-2.3.23.jar"
-ROBOVM_CT="$M2/com/mobidevelop/robovm/robovm-cocoatouch/2.3.23/robovm-cocoatouch-2.3.23.jar"
-GDXB="$M2/com/badlogicgames/gdx/gdx-backend-robovm/1.13.5/gdx-backend-robovm-1.13.5.jar"
+RT="$M2/com/mobidevelop/robovm/robovm-rt/2.3.24/robovm-rt-2.3.24.jar"
+ROBOVM_OBJC="$M2/com/mobidevelop/robovm/robovm-objc/2.3.24/robovm-objc-2.3.24.jar"
+ROBOVM_CT="$M2/com/mobidevelop/robovm/robovm-cocoatouch/2.3.24/robovm-cocoatouch-2.3.24.jar"
+GDXB="$M2/com/badlogicgames/gdx/gdx-backend-robovm/1.14.2/gdx-backend-robovm-1.14.2.jar"
 
 # ---------------------------------------------------------------- bootstrap
 bootstrap() {
@@ -405,8 +405,8 @@ assemble_arm64_sim_app() {
     local TMP="$ROOT/forge-gui-ios/target/robovm.tmp"
     local APP="$TMP/$APP_EXEC.app"
     local RVHOME CJ
-    RVHOME="$(ls -d "$M2"/com/mobidevelop/robovm/robovm-dist/*/unpacked/robovm-* 2>/dev/null | sort | tail -1)"
-    CJ="$(ls "$M2"/com/mobidevelop/robovm/robovm-dist-compiler/*/robovm-dist-compiler-*.jar 2>/dev/null | sort | tail -1)"
+    RVHOME="$(ls -d "$CLONE"/com/mobidevelop/robovm/robovm-dist/*/unpacked/robovm-* 2>/dev/null | sort | tail -1)"
+    CJ="$(ls "$CLONE"/com/mobidevelop/robovm/robovm-dist-compiler/*/robovm-dist-compiler-*.jar 2>/dev/null | sort | tail -1)"
     [ -f "$TMP/config.xml" ] || { echo "config.xml missing — robovm build did not run"; exit 1; }
     echo "=== assemble arm64 iOS-simulator .app (RoboVM 2.3.24 can't launch AS sims via maven) ==="
 
@@ -424,15 +424,15 @@ assemble_arm64_sim_app() {
 
     # 3. re-stamp the main binary as iOS-simulator (AppCompiler writes device LC_VERSION_MIN_IPHONEOS)
     local SDKV; SDKV="$(xcrun --sdk iphonesimulator --show-sdk-version)"
-    vtool -set-build-version 7 14.0 "$SDKV" -replace -output "$APP/$APP_EXEC.sim" "$APP/$APP_EXEC"
+    vtool -set-build-version 7 14.0 26.0 -replace -output "$APP/$APP_EXEC.sim" "$APP/$APP_EXEC"
     mv -f "$APP/$APP_EXEC.sim" "$APP/$APP_EXEC"
 
     # 4. swap device framework slices -> simulator slices
     local GDX="$CLONE/com/badlogicgames/gdx"
-    _swap_sim_framework gdx          "$GDX/gdx-platform/1.13.5/gdx-platform-1.13.5-natives-ios.jar"                   "$APP"
-    _swap_sim_framework ObjectAL     "$GDX/gdx-platform/1.13.5/gdx-platform-1.13.5-natives-ios.jar"                   "$APP"
-    _swap_sim_framework gdx-freetype "$GDX/gdx-freetype-platform/1.13.5/gdx-freetype-platform-1.13.5-natives-ios.jar" "$APP"
-    _swap_sim_framework gdx-box2d    "$GDX/gdx-box2d-platform/1.13.5/gdx-box2d-platform-1.13.5-natives-ios.jar"       "$APP"
+    _swap_sim_framework gdx          "$GDX/gdx-platform/1.14.2/gdx-platform-1.14.2-natives-ios.jar"                   "$APP"
+    _swap_sim_framework ObjectAL     "$GDX/gdx-platform/1.14.2/gdx-platform-1.14.2-natives-ios.jar"                   "$APP"
+    _swap_sim_framework gdx-freetype "$GDX/gdx-freetype-platform/1.14.2/gdx-freetype-platform-1.14.2-natives-ios.jar" "$APP"
+    _swap_sim_framework gdx-box2d    "$GDX/gdx-box2d-platform/1.14.2/gdx-box2d-platform-1.14.2-natives-ios.jar"       "$APP"
 
     # 5. ad-hoc sign (the simulator refuses to launch an unsigned bundle)
     local f
@@ -502,6 +502,8 @@ device() {
         -Dmaven.repo.local="$CLONE" -DskipTests 2>&1 | tail -8) || true
     APP="$ROOT/forge-gui-ios/target/robovm.tmp/$APP_EXEC.app"
     [ -f "$APP/$APP_EXEC" ] || { echo "DEVICE BINARY MISSING - build failed"; exit 1; }
+    # iOS 27 UIScene-lifecycle workaround: stamp SDK 26.0 (see assemble_arm64_sim_app)
+    vtool -set-build-version 2 14.0 26.0 -replace -output "$APP/$APP_EXEC.tmp" "$APP/$APP_EXEC" && mv -f "$APP/$APP_EXEC.tmp" "$APP/$APP_EXEC"
 
     echo "=== sign ==="
     cp "$PROFILE" "$APP/embedded.mobileprovision"

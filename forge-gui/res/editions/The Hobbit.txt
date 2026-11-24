@@ -9,6 +9,7 @@ BoosterSlots=Common,Common-Scene,Uncommon,Uncommon-Special,RareMythic,Land,Wildc
 Booster=6 Common, 1 Common-Scene, 2 Uncommon, 1 Uncommon-Special, 1 RareMythic, 1 Wildcard, 1 WildcardFoil+, 1 Land
 Prerelease=6 Boosters, 1 RareMythic+
 BoosterBox=30
+BoosterCovers=3
 
 [Common]
 Base=Common:fromSheet("HOB cards")
@@ -411,6 +412,10 @@ Replace=.033F fromSheet("HOB journey")+
 11 stone_boulder @Kamila Szutenberg
 12 c_a_treasure_sac @Leonardo Santanna
 13 c_a_treasure_sac @Kamila Szutenberg
+
+[other]
+14 enduring_story @Kim Dingwall
+15 adventure @Nia Kovalevski
 
 [journey]
 1 Plains|HOB|[194]

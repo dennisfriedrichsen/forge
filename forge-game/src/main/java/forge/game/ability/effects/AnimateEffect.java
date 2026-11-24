@@ -19,6 +19,12 @@ import forge.util.TextUtil;
 
 
 public class AnimateEffect extends AnimateEffectBase {
+    public static final String[] OPTIONAL_PARAMS = {
+        "Abilities", "AtEOT", "AtEOTCondition", "AtEOTDesc", "Colors", "Defined", "DefinedDesc",
+        "Duration", "HiddenKeywords", "IfDesc", "ImprintCards", "Keywords", "Name",
+        "OptionQuestion", "Optional", "Power", "RememberObjects", "RemoveTypes", "Replacements",
+        "Toughness", "Triggers", "Types", "sVars", "staticAbilities",
+    };
 
     /* (non-Javadoc)
      * @see forge.card.abilityfactory.SpellEffect#resolve(java.util.Map, forge.card.spellability.SpellAbility)
@@ -35,11 +41,9 @@ public class AnimateEffect extends AnimateEffectBase {
             return;
         }
 
-        // Remember Objects
         if (sa.hasParam("RememberObjects")) {
             animateRemembered = sa.getParam("RememberObjects");
         }
-        // Imprint Cards
         if (sa.hasParam("ImprintCards")) {
             animateImprinted = sa.getParam("ImprintCards");
         }
@@ -160,7 +164,8 @@ public class AnimateEffect extends AnimateEffectBase {
                     ? TextUtil.fastReplace(sa.getParam("OptionQuestion"), "TARGETS", targets)
                     : getStackDescription(sa);
 
-            if (!sa.getActivatingPlayer().getController().confirmAction(sa, null, message, null)) {
+            final Card cardToShow = tgts.size() == 1 ? tgts.get(0) : null;
+            if (!sa.getActivatingPlayer().getController().confirmAction(sa, null, message, cardToShow, null)) {
                 return;
             }
         }
@@ -235,7 +240,8 @@ public class AnimateEffect extends AnimateEffectBase {
             sb.append(" ");
         }
 
-        sb.append(sa.hasParam("DefinedDesc") ? sa.getParam("DefinedDesc") : Lang.joinHomogenous(tgts));
+        // nothing to name yet (Defined$ Remembered before the earlier part of the ability has resolved): "It", not a missing subject
+        sb.append(sa.hasParam("DefinedDesc") ? sa.getParam("DefinedDesc") : tgts.isEmpty() ? "It" : Lang.joinHomogenous(tgts));
         sb.append(" ");
         int initial = sb.length();
         boolean becomes = false;
