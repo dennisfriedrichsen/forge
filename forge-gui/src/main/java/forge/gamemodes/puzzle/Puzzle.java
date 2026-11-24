@@ -29,10 +29,11 @@ public class Puzzle extends GameState implements InventoryItem, Comparable<Puzzl
     String url;
     String difficulty;
     String description;
-    String aiName;
     String targets;
     int targetCount = 1;
     boolean humanControl = false;
+    /** The tutorial is a fixed practice game, not a puzzle: no "Puzzle Goal" card and no turn limit. */
+    boolean hideGoal = false;
     int turns;
     boolean completed;
 
@@ -42,14 +43,14 @@ public class Puzzle extends GameState implements InventoryItem, Comparable<Puzzl
 
     public Puzzle(Map<String, List<String>> puzzleLines, String filename, boolean completed) {
         loadMetaData(puzzleLines.get("metadata"));
-        loadGameState(puzzleLines.get("state"));
+        parse(puzzleLines.get("state"));
         // Generate goal enforcement
         this.filename = filename;
         this.completed = completed;
     }
 
     private void loadMetaData(List<String> metadataLines) {
-        for(String line : metadataLines) {
+        for (String line : metadataLines) {
             String[] split = line.split(":", 2);
             if ("Name".equalsIgnoreCase(split[0])) {
                 this.name = split[1].trim();
@@ -63,14 +64,14 @@ public class Puzzle extends GameState implements InventoryItem, Comparable<Puzzl
                 this.difficulty = split[1].trim();
             } else if ("Description".equalsIgnoreCase(split[0])) {
                 this.description = split[1].trim();
-            } else if ("AIName".equalsIgnoreCase(split[0])) {
-                this.aiName = split[1].trim();
             } else if ("Targets".equalsIgnoreCase(split[0])) {
                 this.targets = split[1].trim();
             } else if ("TargetCount".equalsIgnoreCase(split[0])) {
                 this.targetCount = Integer.parseInt(split[1]);
             } else if ("HumanControl".equalsIgnoreCase(split[0])) {
                 this.humanControl = "true".equalsIgnoreCase(split[1].trim());
+            } else if ("HideGoal".equalsIgnoreCase(split[0])) {
+                this.hideGoal = "true".equalsIgnoreCase(split[1].trim());
             }
         }
     }
@@ -97,9 +98,9 @@ public class Puzzle extends GameState implements InventoryItem, Comparable<Puzzl
         desc.append("\nTurns Limit: ");
         desc.append(this.turns);
 
-        if (this.aiName != null) {
+        if (getAIName() != null) {
             desc.append("\nOpponent: ");
-            desc.append(this.aiName);
+            desc.append(getAIName());
         }
 
         if (this.description != null) {
@@ -108,10 +109,6 @@ public class Puzzle extends GameState implements InventoryItem, Comparable<Puzzl
         }
 
         return desc.toString();
-    }
-    
-    private void loadGameState(List<String> stateLines) {
-        this.parse(stateLines);
     }
 
     public void setupMaxPlayerHandSize(Game game, int maxHandSize) {
@@ -229,7 +226,9 @@ public class Puzzle extends GameState implements InventoryItem, Comparable<Puzzl
     protected void applyGameOnThread(final Game game) {
         setupMaxPlayerHandSize(game, 7);
         super.applyGameOnThread(game);
-        addGoalEnforcement(game);
+        if (!hideGoal) {
+            addGoalEnforcement(game);
+        }
         game.getRules().setAppliedVariants(Sets.newHashSet(GameType.Puzzle));
 
         // for puzzles that are tricky to implement for the AI, they can be fully controlled by the human player
@@ -254,8 +253,6 @@ public class Puzzle extends GameState implements InventoryItem, Comparable<Puzzl
     }
 
     public boolean getCompleted() { return completed; }
-
-    public String getAIName() { return aiName; }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();

@@ -48,6 +48,14 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public abstract class AnimateEffectBase extends SpellAbilityEffect {
+    public static final String[] OPTIONAL_PARAMS = {
+        "AddAllCreatureTypes", "CantHaveKeyword", "Incorporate", "LeaveBattlefield", "ManaCost",
+        "OverwriteColors", "RememberAnimated", "RemoveAllAbilities", "RemoveArtifactTypes",
+        "RemoveCreatureTypes", "RemoveEnchantmentTypes", "RemoveLandTypes",
+        "RemoveNonManaAbilities", "RemoveSuperTypes", "RemoveThisAbility", "RevertCost",
+        "TransferActivator",
+    };
+
     public static void doAnimate(final Card c, final SpellAbility sa, final Integer power, final Integer toughness,
             final CardType addType, final CardType removeType, final ColorSet colors,
             final List<String> keywords, final List<String> removeKeywords, final List<String> hiddenKeywords,
@@ -114,6 +122,9 @@ public abstract class AnimateEffectBase extends SpellAbilityEffect {
                 c.addPerpetual(new PerpetualTypes(timestamp, addType, removeType, remove));
             }
             c.addChangedCardTypes(addType, removeType, addAllCreatureTypes, remove, timestamp, 0, true, false);
+            if (remove.contains(RemoveType.LandTypes)) {
+                c.updateStateForView();
+            }
         }
 
         if (!keywords.isEmpty() || !removeKeywords.isEmpty() || removeAllKeywords) {

@@ -12,6 +12,9 @@ import forge.game.zone.ZoneType;
 import forge.util.Localizer;
 
 public class AbandonEffect extends SpellAbilityEffect {
+    public static final String[] OPTIONAL_PARAMS = {
+        "Optional", "RememberAbandoned",
+    };
 
 
     /* (non-Javadoc)
@@ -33,6 +36,9 @@ public class AbandonEffect extends SpellAbilityEffect {
 
         controller.getZone(ZoneType.Command).remove(source);
         controller.getZone(ZoneType.SchemeDeck).add(source);
+
+        controller.getGame().getTriggerHandler().clearActiveTriggers(source, null);
+        controller.getGame().getTriggerHandler().registerActiveTrigger(source, false);
 
         final Map<AbilityKey, Object> runParams = AbilityKey.newMap();
         runParams.put(AbilityKey.Scheme, source);
