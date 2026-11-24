@@ -6,14 +6,13 @@ import forge.game.phase.PhaseType;
 import forge.game.player.Player;
 import forge.game.spellability.SpellAbility;
 
-public record AiAbilityDecision(int rating, AiPlayDecision decision, SpellAbility sa) {
+public record AiAbilityDecision(int rating, AiPlayDecision decision) {
     private static int MIN_RATING = 30;
 
-    public AiAbilityDecision(int rating, AiPlayDecision decision) {
-        this(rating, decision, null);
-    }
-
     public boolean willingToPlay() {
+        return willingToPlay(null);
+    }
+    public boolean willingToPlay(SpellAbility sa) {
         if (!decision.willingToPlay()) {
             return false;
         }
@@ -31,7 +30,7 @@ public record AiAbilityDecision(int rating, AiPlayDecision decision, SpellAbilit
                 + CardUtil.getThisTurnCast("Spell.YouCtrl", sa.getHostCard(), sa, ai).size();
         if (actionsThisTurn == 0) {
             PhaseHandler ph = sa.getHostCard().getGame().getPhaseHandler();
-            if (ph.getNextTurn() == ai) {
+            if (ph.isPlayerNextTurn(ai)) {
                 // try not to waste open mana
                 boosted += 10;
             } else if (ph.getPhase() == PhaseType.MAIN2 && SpellAbilityAi.isSorcerySpeed(sa, ai)) {
