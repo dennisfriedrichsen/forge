@@ -4,10 +4,13 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.Matrix4;
 
+import com.badlogic.gdx.math.Rectangle;
+import forge.Forge;
 import forge.Graphics;
 import forge.gui.FThreads;
 
@@ -21,8 +24,8 @@ public abstract class FBufferedImage extends FImageComplex {
     }
 
     public FBufferedImage(float width0, float height0, float opacity0) {
-        width = width0;
-        height = height0;
+        width = Math.max(width0, 2f);
+        height = Math.max(height0, 2f);
         opacity = opacity0;
     }
 
@@ -48,12 +51,12 @@ public abstract class FBufferedImage extends FImageComplex {
 
     @Override
     public TextureRegion getTextureRegion() {
-        return new TextureRegion(checkFrameBuffer().getColorBufferTexture());
+        return checkFrameBuffer() == null ? null : new TextureRegion(checkFrameBuffer().getColorBufferTexture());
     }
 
     @Override
     public Texture getTexture() {
-        return checkFrameBuffer().getColorBufferTexture();
+        return checkFrameBuffer() == null ? null : checkFrameBuffer().getColorBufferTexture();
     }
 
     public void clear() {
@@ -66,28 +69,54 @@ public abstract class FBufferedImage extends FImageComplex {
     }
 
     public FrameBuffer checkFrameBuffer() {
-        if (frameBuffer == null) {
-            Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST); //prevent buffered image being clipped
+        try {
+            if (frameBuffer == null) {
+                Graphics g = Forge.getGraphics();
+                SpriteBatch batch = g.getBatch();
+                boolean wasScissorEnabled = Gdx.gl.glIsEnabled(GL20.GL_SCISSOR_TEST);
+                boolean wasDrawing = batch.isDrawing(); //don't assume - check, so we never call end() on an already-paused batch
+                Matrix4 savedProjection = wasDrawing ? new Matrix4(batch.getProjectionMatrix()) : null;
+                float savedRegionHeight = wasDrawing ? g.getRegionHeight() : 0f;
+                Rectangle savedBounds = wasDrawing ? g.getBounds() : null;
+                Rectangle savedVisibleBounds = wasDrawing ? g.getVisibleBounds() : null;
+                if (wasScissorEnabled) Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+                frameBuffer = new FrameBuffer(Format.RGBA8888, (int) width, (int) height, false);
 
-            //render texture to frame buffer if needed
-            frameBuffer = new FrameBuffer(Format.RGBA8888, (int) width, (int) height, false);
-            frameBuffer.begin();
-
-            //frame graphics must be given a projection matrix
-            //so stuff is rendered properly to custom sized frame buffer
-            Graphics frameGraphics = new Graphics();
-            Matrix4 matrix = new Matrix4();
-            matrix.setToOrtho2D(0, 0, width, height);
-            frameGraphics.setProjectionMatrix(matrix);
-
-            frameGraphics.begin(width, height);
-            draw(frameGraphics, width, height);
-            frameGraphics.end();
-
-            frameBuffer.end();
-            frameGraphics.dispose();
-
-            Gdx.gl.glEnable(GL20.GL_SCISSOR_TEST);
+                try {
+                    if (wasDrawing) batch.end();
+                    frameBuffer.begin();
+                    Gdx.gl.glClearColor(0, 0, 0, 0);
+                    Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+                    Matrix4 fboMatrix = new Matrix4().setToOrtho2D(0, 0, width, height);
+                    g.setBounds(width, height);
+                    g.setProjectionMatrix(fboMatrix);
+                    batch.begin();
+                    final boolean separateAlpha = separateAlphaBlend();
+                    final int srcColor = batch.getBlendSrcFunc(), dstColor = batch.getBlendDstFunc();
+                    final int srcAlpha = batch.getBlendSrcFuncAlpha(), dstAlpha = batch.getBlendDstFuncAlpha();
+                    if (separateAlpha)
+                        batch.setBlendFunctionSeparate(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, GL20.GL_ONE, GL20.GL_ONE_MINUS_SRC_ALPHA);
+                    try {
+                        draw(g, width, height);
+                    } finally {
+                        if (separateAlpha)
+                            batch.setBlendFunctionSeparate(srcColor, dstColor, srcAlpha, dstAlpha);
+                    }
+                    batch.end();
+                } finally {
+                    frameBuffer.end();
+                    if (wasDrawing) {
+                        g.setProjectionMatrix(savedProjection);
+                        g.setBounds(savedBounds);
+                        g.setVisibleBounds(savedVisibleBounds);
+                        g.setRegionHeight(savedRegionHeight);
+                        batch.begin();
+                    }
+                    if (wasScissorEnabled) Gdx.gl.glEnable(GL20.GL_SCISSOR_TEST);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return frameBuffer;
     }
@@ -95,6 +124,14 @@ public abstract class FBufferedImage extends FImageComplex {
     public void dispose() {
         if (frameBuffer != null)
             frameBuffer.dispose();
+    }
+
+    /**
+     * Subclasses that draw translucent content return true, so the alpha channel of the buffer is blended correctly
+     * (ONE as source) and the result is not partly see-through. Off by default, so other buffers are unchanged.
+     */
+    protected boolean separateAlphaBlend() {
+        return false;
     }
 
     protected abstract void draw(Graphics g, float w, float h);

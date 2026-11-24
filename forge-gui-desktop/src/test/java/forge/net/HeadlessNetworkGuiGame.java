@@ -1,14 +1,12 @@
 package forge.net;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import forge.LobbyPlayer;
-import forge.game.GameState;
 import forge.deck.CardPool;
 import forge.game.GameEntityView;
 import forge.game.card.CardView;
@@ -22,8 +20,6 @@ import forge.gamemodes.net.NetworkGuiGame;
 import forge.gui.interfaces.IGuiGame;
 import forge.item.PaperCard;
 import forge.localinstance.skin.FSkinProp;
-import forge.player.PlayerZoneUpdate;
-import forge.player.PlayerZoneUpdates;
 import forge.trackable.TrackableCollection;
 import forge.util.FSerializableFunction;
 import forge.util.ITriggerEvent;
@@ -54,15 +50,6 @@ public class HeadlessNetworkGuiGame extends NetworkGuiGame {
     }
 
     @Override
-    public PlayerZoneUpdates openZones(PlayerView controller, Collection<ZoneType> zones,
-            Map<PlayerView, Object> players, boolean backupLastZones) {
-        return null;
-    }
-
-    @Override
-    public void restoreOldZones(PlayerView playerView, PlayerZoneUpdates playerZoneUpdates) { }
-
-    @Override
     public void openView(TrackableCollection<PlayerView> myPlayers) {
         openViewCalled = true;
     }
@@ -79,32 +66,7 @@ public class HeadlessNetworkGuiGame extends NetworkGuiGame {
     @Override public void updateButtons(PlayerView owner, String label1, String label2, boolean enable1, boolean enable2, boolean focus1) { }
     @Override public void flashIncorrectAction() { }
     @Override public void alertUser() { }
-    @Override public void updatePhase(boolean saveState) { }
-    @Override public void updateTurn(PlayerView player) { }
-    @Override public void updatePlayerControl() { }
-    @Override public void enableOverlay() { }
-    @Override public void disableOverlay() { }
-    @Override public void showManaPool(PlayerView player) { }
-    @Override public void hideManaPool(PlayerView player) { }
-    @Override public void updateStack() { }
 
-    @Override
-    public Iterable<PlayerZoneUpdate> tempShowZones(PlayerView controller, Iterable<PlayerZoneUpdate> zonesToUpdate) {
-        return zonesToUpdate;
-    }
-
-    @Override public void hideZones(PlayerView controller, Iterable<PlayerZoneUpdate> zonesToUpdate) { }
-    @Override public void updateZones(Iterable<PlayerZoneUpdate> zonesToUpdate) { }
-    @Override public void updateCards(Iterable<CardView> cards) { }
-
-    @Override
-    public GameState getGamestate() {
-        return null;
-    }
-
-    @Override public void updateManaPool(Iterable<PlayerView> manaPoolUpdate) { }
-    @Override public void updateLives(Iterable<PlayerView> livesUpdate) { }
-    @Override public void updateShards(Iterable<PlayerView> shardsUpdate) { }
     @Override public void setPanelSelection(CardView hostCard) { }
 
     @Override
@@ -194,7 +156,7 @@ public class HeadlessNetworkGuiGame extends NetworkGuiGame {
     }
 
     @Override
-    public List<CardView> manipulateCardList(String title, Iterable<CardView> cards, Iterable<CardView> manipulable, boolean toTop, boolean toBottom, boolean toAnywhere) {
+    public List<CardView> manipulateCardList(String title, Iterable<CardView> cards, Iterable<CardView> manipulable, ZoneType secondPile) {
         List<CardView> result = new ArrayList<>();
         if (cards != null) {
             for (CardView card : cards) {
