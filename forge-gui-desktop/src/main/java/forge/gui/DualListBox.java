@@ -1,6 +1,7 @@
 package forge.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FontMetrics;
 import java.awt.GridLayout;
 import java.awt.event.FocusAdapter;
@@ -12,7 +13,9 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
@@ -33,6 +36,7 @@ import forge.toolbox.FLabel;
 import forge.toolbox.FList;
 import forge.toolbox.FPanel;
 import forge.toolbox.FScrollPane;
+import forge.util.CardTranslation;
 import forge.util.Localizer;
 import forge.view.FDialog;
 
@@ -82,6 +86,8 @@ public class DualListBox<T> extends FDialog {
         sourceList = new FList<>(sourceListModel);
         destListModel = new UnsortedListModel<>();
         destList = new FList<>(destListModel);
+        useViewerAwareLabels(sourceList);
+        useViewerAwareLabels(destList);
 
         final Runnable onAdd = new Runnable() {
             @SuppressWarnings("unchecked")
@@ -215,11 +221,36 @@ public class DualListBox<T> extends FDialog {
         }
     }
 
+    /**
+     * A face-down card the local player may look at (e.g. exiled by Scroll Rack) would otherwise be
+     * listed as "Face-down card", leaving nothing to choose by.
+     */
+    private String labelOf(final Object item) {
+        if (item instanceof CardView cv && cv.isFaceDown() && matchUI != null && matchUI.mayFlip(cv)) {
+            final CardStateView realState = cv.getAlternateState();
+            if (realState != null && !realState.getName().isEmpty()) {
+                return CardTranslation.getTranslatedName(realState.getName()) + " (face down, H" + cv.getHiddenId() + ")";
+            }
+        }
+        return String.valueOf(item);
+    }
+
+    private void useViewerAwareLabels(final FList<T> list) {
+        final ListCellRenderer<? super T> baseRenderer = list.getCellRenderer();
+        list.setCellRenderer((lst, value, index, isSelected, cellHasFocus) -> {
+            final Component c = baseRenderer.getListCellRendererComponent(lst, value, index, isSelected, cellHasFocus);
+            if (c instanceof JLabel label && value instanceof CardView) {
+                label.setText(labelOf(value));
+            }
+            return c;
+        });
+    }
+
     private int getMaxElementWidth(UnsortedListModel<T> model) {
         final FontMetrics metrics = this.getFontMetrics(this.getFont());
         int width = 0;
         for (int i = 0; i < model.getSize(); i++) {
-            final int itemWidth = metrics.stringWidth(model.getElementAt(i).toString());
+            final int itemWidth = metrics.stringWidth(labelOf(model.getElementAt(i)));
             if (itemWidth > width) {
                 width = itemWidth;
             }
