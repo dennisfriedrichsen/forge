@@ -5,6 +5,7 @@ import forge.ai.ComputerUtilAbility;
 import forge.card.CardStateName;
 import forge.card.MagicColor;
 import forge.game.Game;
+import forge.game.ability.AbilityUtils;
 import forge.game.ability.ApiType;
 import forge.game.card.*;
 import forge.game.cost.Cost;
@@ -2692,6 +2693,57 @@ public class GameSimulationTest extends SimulationTest {
                 AssertJUnit.assertTrue(areWordsInIterable(words, card.getNotedTypes()));
             }
         }
+    }
+
+    @Test
+    public void testScrollRackExilesFaceDown() {
+        Game game = initAndCreateGame();
+        Player p = game.getPlayers().get(1);
+        game.getPhaseHandler().devModeSet(PhaseType.MAIN1, p);
+
+        addCard("Island", p);
+        Card rack = addCard("Scroll Rack", p);
+        addCardToZone("Plains", p, ZoneType.Hand);
+        addCardToZone("Island", p, ZoneType.Library);
+
+        // Stop after the exile step so we can see the exiled cards before they go back on top.
+        SpellAbility rackSA = findSAWithPrefix(rack, "{1}, {T}:");
+        AssertJUnit.assertNotNull(rackSA);
+        rackSA.setSubAbility(null);
+        rackSA.setActivatingPlayer(p);
+        AbilityUtils.resolve(rackSA);
+
+        AssertJUnit.assertEquals(1, p.getCardsIn(ZoneType.Exile).size());
+        Card exiled = p.getCardsIn(ZoneType.Exile).getFirst();
+        AssertJUnit.assertTrue(exiled.isFaceDown());
+        AssertJUnit.assertTrue(exiled.mayPlayerLook(p));
+        AssertJUnit.assertFalse(exiled.mayPlayerLook(game.getPlayers().get(0)));
+    }
+
+    @Test
+    public void testScrollRackReturnsCardsFaceUpToLibrary() {
+        Game game = initAndCreateGame();
+        Player p = game.getPlayers().get(1);
+        game.getPhaseHandler().devModeSet(PhaseType.MAIN1, p);
+
+        addCard("Island", p);
+        Card rack = addCard("Scroll Rack", p);
+        addCardToZone("Plains", p, ZoneType.Hand);
+        addCardToZone("Island", p, ZoneType.Library);
+
+        SpellAbility rackSA = findSAWithPrefix(rack, "{1}, {T}:");
+        AssertJUnit.assertNotNull(rackSA);
+
+        GameSimulator sim = createSimulator(p);
+        sim.simulateSpellAbility(rackSA);
+        Game simGame = sim.getSimulatedGameState();
+
+        Player simP = simGame.getPlayers().get(1);
+        AssertJUnit.assertTrue(simP.getCardsIn(ZoneType.Exile).isEmpty());
+        Card top = simP.getCardsIn(ZoneType.Library).getFirst();
+        AssertJUnit.assertEquals("Plains", top.getName());
+        AssertJUnit.assertFalse(top.isFaceDown());
+        AssertJUnit.assertEquals("Island", simP.getCardsIn(ZoneType.Hand).getFirst().getName());
     }
 
     @Test
