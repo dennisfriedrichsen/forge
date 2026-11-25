@@ -1,0 +1,18 @@
+[metadata]
+Name:Savannah pays for Birds
+Goal:Survive
+Turns:3
+Difficulty:Easy
+Description:Tap Savannah to pay for Birds of Paradise. Does Forge ask whether to add W or G?
+[state]
+humanlife=20
+ailife=20
+turn=1
+activeplayer=human
+activephase=MAIN1
+humanhand=Birds of Paradise
+humanlibrary=Forest;Forest;Forest;Forest;Forest
+humanbattlefield=Savannah
+aihand=
+ailibrary=Island;Island;Island;Island;Island
+aibattlefield=

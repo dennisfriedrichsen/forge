@@ -22,6 +22,7 @@ import forge.Singletons;
 import forge.error.ExceptionHandler;
 import forge.gui.GuiBase;
 import forge.gui.card.CardReaderExperiments;
+import forge.menus.HelpMenu;
 import forge.util.BuildInfo;
 import io.sentry.Sentry;
 
@@ -89,8 +90,20 @@ public final class Main {
         ExceptionHandler.registerErrorHandling();
         GuiBase.logHWInfo();
 
+        // "puzzle <file>" is a normal GUI launch that drops straight into the board laid out in that file.
+        if ("puzzle".equals(mode)) {
+            if (args.length < 2) {
+                System.out.println("Usage: puzzle <path to .pzl file>");
+                System.exit(1);
+            }
+            if (!StartupPuzzle.setPending(args[1])) {
+                System.exit(1);
+            }
+        }
+
         // Start splash screen first, then data models, then controller.
-        if (args.length == 0) {
+        if (args.length == 0 || "puzzle".equals(mode)) {
+            HelpMenu.installSystemAboutHandler();
             Singletons.initializeOnce(true);
 
             // Controller can now step in and take over.
@@ -113,7 +126,7 @@ public final class Main {
                 break;
 
             default:
-                System.out.println("Unknown mode.\nKnown modes are 'sim', 'parse', 'server'");
+                System.out.println("Unknown mode.\nKnown modes are 'sim', 'parse', 'server', 'puzzle'");
                 break;
         }
 

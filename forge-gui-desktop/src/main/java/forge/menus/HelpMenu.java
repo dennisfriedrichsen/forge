@@ -9,7 +9,9 @@ import java.io.IOException;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
+import forge.GuiDesktop;
 import forge.error.ExceptionHandler;
 import forge.localinstance.properties.ForgeConstants;
 import forge.screens.home.welcome.WelcomeWizardDialog;
@@ -52,12 +54,28 @@ public final class HelpMenu {
     }
 
     private static ActionListener getAboutForgeAction() {
-        return e -> {
-            final Localizer localizer = Localizer.getInstance();
-            FOptionPane.showMessageDialog(
-                    "Version : " + BuildInfo.getVersionString(),
-                    localizer.getMessage("lblAboutForge"));
-        };
+        return e -> showAboutDialog();
+    }
+
+    public static void showAboutDialog() {
+        final Localizer localizer = Localizer.getInstance();
+        FOptionPane.showMessageDialog(
+                "Version : " + BuildInfo.getVersionString(),
+                localizer.getMessage("lblAboutForge"));
+    }
+
+    /**
+     * Makes the system's "About Forge" item (the app menu on macOS) open Forge's own About dialog,
+     * which shows the full version; the system one only knows the bundle's numeric version.
+     */
+    public static void installSystemAboutHandler() {
+        if (!Desktop.isDesktopSupported()) {
+            return;
+        }
+        final Desktop desktop = Desktop.getDesktop();
+        if (desktop.isSupported(Desktop.Action.APP_ABOUT)) {
+            desktop.setAboutHandler(e -> SwingUtilities.invokeLater(HelpMenu::showAboutDialog));
+        }
     }
 
     private static JMenu getMenu_GettingStarted() {
@@ -157,7 +175,7 @@ public final class HelpMenu {
     protected static File getFile(String filename) {
         // !! Linux is case-sensitive so file name and extension need to match exactly !!
         File file = null;
-        String filePath = FileUtil.pathCombine(System.getProperty("user.dir"), filename);
+        String filePath = FileUtil.pathCombine(GuiDesktop.getInstallDir(), filename);
         if (FileUtil.doesFileExist(filePath)) {
             file = new File(filePath);
         }

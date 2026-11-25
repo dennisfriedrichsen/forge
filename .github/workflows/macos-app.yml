@@ -1,0 +1,86 @@
+name: Build macOS App
+
+# Builds a self-contained Forge.app (bundled Java runtime) packaged as a .dmg, for Apple Silicon and Intel.
+# Given a release tag (a release published by hand, or a call from another workflow with `tag`), the .dmg
+# files are attached to that release; a manual run just keeps them as workflow artifacts.
+# Note: releases created with GITHUB_TOKEN (e.g. by maven-publish.yml) don't fire `release` events, so the
+# release workflow has to call this one: `uses: ./.github/workflows/macos-app.yml` with `tag: <release tag>`.
+
+on:
+  release:
+    types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Release tag to build and attach the .dmg files to'
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or SHA to build (defaults to the selected branch)'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64
+            label: arm64
+          # An x64 JDK runs under Rosetta on the Apple Silicon runner, so jpackage emits an Intel app.
+          - arch: x64
+            label: x64
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag || inputs.ref || github.ref }}
+
+      - name: Set up JDK 21 (${{ matrix.arch }})
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          architecture: ${{ matrix.arch }}
+          cache: 'maven'
+
+      # A release tag like v2.0.17-dennis.2 becomes the app version (shown in Help > About Forge),
+      # so fork builds are distinguishable from upstream ones; other runs keep the pom's version.
+      - name: Pick the version
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          if [ -n "$TAG" ]; then
+            echo "args=-Drevision=${TAG#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build Forge.app and .dmg
+        run: mvn -B -U -pl forge-gui-desktop -am -P osx package -DskipTests ${{ steps.version.outputs.args }}
+
+      - name: Name the .dmg for its architecture
+        id: dmg
+        run: |
+          src=$(ls forge-gui-desktop/target/osx/*.dmg)
+          name="$(basename "$src" .dmg)-macos-${{ matrix.label }}.dmg"
+          mv "$src" "forge-gui-desktop/target/osx/$name"
+          echo "path=forge-gui-desktop/target/osx/$name" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: forge-macos-${{ matrix.label }}
+          path: ${{ steps.dmg.outputs.path }}
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: github.event.release.tag_name || inputs.tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: gh release upload "$TAG" "${{ steps.dmg.outputs.path }}" --clobber

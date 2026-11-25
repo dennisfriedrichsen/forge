@@ -2166,6 +2166,7 @@ public class PlayerControllerHuman extends PlayerController implements IGameCont
 
     @Override
     public boolean confirmPayment(final CostPart costPart, final String question, SpellAbility sa) {
+        final boolean defaultIsYes = !sa.hasParam("UnlessDefaultNo");
         if (getGui().isLibgdxPort()) {
             CardView cardView = sa.getCardView();
             try {
@@ -2182,9 +2183,9 @@ public class PlayerControllerHuman extends PlayerController implements IGameCont
                 //prevent NPE when overriding the cardView, the getPaperCardFromImageKey can return null making the GUI freeze, reset the view if error happens
                 cardView = sa.getCardView();
             }
-            return getGui().confirm(cardView, question.replaceAll("\n", " "));
+            return getGui().confirm(cardView, question.replaceAll("\n", " "), defaultIsYes, InputConfirm.defaultOptions);
         }
-        final boolean result = InputConfirm.confirm(this, sa, question);
+        final boolean result = InputConfirm.confirm(this, sa, question, defaultIsYes, InputConfirm.defaultOptions);
         if (result) {
             macros().addRememberedAction(new PayCostAction(sa.getCardView()));
         }
@@ -2776,8 +2777,8 @@ public class PlayerControllerHuman extends PlayerController implements IGameCont
     }
 
     @Override
-    public CostDecisionMakerBase getCostDecisionMaker(Player player, SpellAbility ability, boolean effect, String prompt) {
-        return new HumanCostDecision(this, player, ability, effect, prompt);
+    public CostDecisionMakerBase getCostDecisionMaker(Player player, SpellAbility ability, boolean effect, String orString) {
+        return new HumanCostDecision(this, player, ability, effect, orString);
     }
 
     @Override
