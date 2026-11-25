@@ -285,7 +285,7 @@ public class VStack implements IVDoc<CStack> {
             setBackground(new Color(color.r, color.g, color.b));
             setForeground(FSkin.getHighContrastColor(getBackground()));
             
-            this.cachedImage = new CachedCardImage(item.getSourceCard(), controller.getMatchUI().getLocalPlayers(), CARD_WIDTH, CARD_HEIGHT) {
+            this.cachedImage = new CachedCardImage(item.getSourceCard(), controller.getMatchUI().getImageViewers(item.getSourceCard()), CARD_WIDTH, CARD_HEIGHT) {
                 @Override
                 public void onImageFetched() {
                     repaint();

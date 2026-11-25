@@ -254,6 +254,15 @@ public abstract class AbstractGuiGame implements IGuiGame, IMayViewCards {
         return c.canBeShownToAny(getLocalPlayers());
     }
 
+    /**
+     * The viewers to pass to {@code CardStateView.getImageKey} when drawing a card's picture.
+     * Returns {@code null} (show the real face) whenever {@link #mayView} allows the card, so
+     * the picture follows the same rule as the overlays, including Dev Mode "View All Cards".
+     */
+    public final Iterable<PlayerView> getImageViewers(final CardView c) {
+        return c != null && mayView(c) ? null : getLocalPlayers();
+    }
+
     @Override
     public boolean mayFlip(final CardView cv) {
         if (cv == null) {
